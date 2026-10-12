@@ -1,0 +1,51 @@
+import pytest
+from src.KONF_2_1 import validate_config
+
+
+def test_validate_config_success():
+    valid_config = {
+        "package_name": "test-pkg",
+        "repo_url": "https://github.com/test/repo",
+        "repo_mode": "online",
+        "package_version": "1.0.0",
+        "output_image": "out.png",
+        "max_depth": 3
+    }
+    validate_config(valid_config)
+
+
+@pytest.mark.parametrize(
+    "bad_config, expected_exception, error_message_part",
+    [
+        (
+            {"repo_url": "url", "repo_mode": "online", "package_version": "1.0", "output_image": "img", "max_depth": 1},
+            KeyError,
+            "package_name"
+        ),
+        (
+            {"package_name": "pkg", "repo_url": "url", "repo_mode": "online", "package_version": "1.0", "output_image": "img", "max_depth": "three"},
+            TypeError,
+            "max_depth"
+        ),
+        (
+            {"package_name": "pkg", "repo_url": "url", "repo_mode": "online", "package_version": "1.0", "output_image": "img", "max_depth": True},
+            TypeError,
+            "max_depth"
+        ),
+        (
+            {"package_name": "pkg", "repo_url": "url", "repo_mode": "online", "package_version": "1.0", "output_image": "img", "max_depth": -1},
+            ValueError,
+            "max_depth"
+        ),
+        (
+            {"package_name": "pkg", "repo_url": "url", "repo_mode": "super-mode", "package_version": "1.0", "output_image": "img", "max_depth": 2},
+            ValueError,
+            "repo_mode"
+        ),
+    ]
+)
+def test_validate_config_errors(bad_config, expected_exception, error_message_part):
+    with pytest.raises(expected_exception) as exc_info:
+        validate_config(bad_config)
+    
+    assert error_message_part in str(exc_info.value)
